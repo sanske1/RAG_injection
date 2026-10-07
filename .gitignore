@@ -1,0 +1,29 @@
+# ── 语料原文：11 个上游仓库，克隆而来，不入库 ──────────────
+# 只保留本项目自己的实战复盘（自建经验），其余全部忽略
+sources/*
+!sources/自建经验/
+
+# ── 产物：可由 chunk.py / ingest.py 重建 ────────────────────
+rag/chunks.jsonl
+rag/chunks.jsonl.bak
+rag/chunks_lessons.jsonl
+rag/.ingest_state*.json
+skill/rebuild/chunks.jsonl
+
+# ── 数据卷与打包产物：体积远超 GitHub 限制，走 Release 附件 ──
+skill/milvus/volumes.tar.gz
+skill/milvus/volumes/
+skill.zip
+skill.zip.sha256.txt
+
+# ── 环境与缓存 ─────────────────────────────────────────────
+.venv/
+venv/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+
+# ── 本机配置：含绝对路径，各自按模板生成 ────────────────────
+.mcp.json
+.claude/settings.local.json

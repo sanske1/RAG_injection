@@ -1,0 +1,6 @@
+# 版本必须钉死，不要放开
+# - pymilvus 3.x 与 Milvus 3.x 配套；2.x 的 API 不同
+# - mcp 2.x 把 FastMCP 改名成了 MCPServer（from mcp.server.mcpserver import MCPServer），
+#   装成 mcp<2 会让 mcp_server.py 直接导入失败
+pymilvus==3.0.2
+mcp==2.2.0

@@ -1,0 +1,17 @@
+测试题 第 16 到 30 条。一行一条，原样作为 query 传给 search_pentest_kb。
+
+密码喷洒 password spraying
+ADCS 证书模板攻击 ESC1
+影子凭据 shadow credentials
+Kerberos 委派攻击
+SMB relay 中继攻击
+DPAPI 凭据解密
+Linux capabilities 提权
+Docker 容器逃逸
+cron 计划任务提权
+Windows 计划任务提权
+BloodHound 域内信息收集
+GPO 组策略滥用
+域信任跨域攻击
+PsExec WMI 横向移动
+AMSI 绕过

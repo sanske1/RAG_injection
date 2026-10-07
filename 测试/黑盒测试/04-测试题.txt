@@ -1,0 +1,17 @@
+测试题 第 1 到 15 条。一行一条，原样作为 query 传给 search_pentest_kb。
+
+SSRF 服务端请求伪造的利用手法
+反序列化漏洞怎么利用
+原型链污染 prototype pollution
+HTTP 请求走私
+开放重定向漏洞
+LDAP 注入
+NoSQL 注入
+会话固定攻击 session fixation
+点击劫持 clickjacking
+Web 缓存投毒
+目录穿越读取任意文件
+本地文件包含 LFI
+子域名接管
+绕过 401 403 访问控制
+SAML 单点登录攻击

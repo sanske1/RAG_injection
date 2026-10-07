@@ -1,0 +1,62 @@
+渗透测试知识库 RAG —— skill 包说明
+生成时间：2026-09-30 23:18
+
+======================= 内容清单 =======================
+
+milvus/volumes.tar.gz                                     751 MB
+    Milvus 数据卷快照，含三份：etcd/ (139M)  milvus/ (317M)  minio/ (567M)
+    解压后约 934 MB。解压时要解到名为 volumes/ 的目录下：
+        mkdir -p volumes && tar xzf volumes.tar.gz -C volumes
+    原因：compose 里的路径是 ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/...
+
+milvus/milvus-standalone-docker-compose.yaml              3 KB
+    起 Milvus 用。钉死 milvusdb/milvus:v3.0.2 —— 版本必须一致，否则数据可能读不了。
+
+mcp/mcp_server.py                                         3 KB      MCP 服务入口
+mcp/kb.py                                                 12 KB     检索层（mcp_server 依赖它）
+mcp/requirements.txt                                      —         Python 依赖，版本钉死
+mcp/.mcp.json.template                                    —         MCP 接入模板，改路径即可
+
+rebuild/chunks.jsonl                                      28 MB     切好的 27,820 块
+rebuild/chunk.py                                          8 KB      重新切块（需要语料原文，本包不含）
+rebuild/ingest.py                                         4 KB      重新向量化入库
+
+SKILL.md                                                  8 KB      部署与使用说明（先读这个）
+deploy.sh                                                 5 KB      一键部署脚本（检查依赖→解卷→起服务→验数据→生成配置）
+
+======================= 版本与元信息 =======================
+
+Milvus 镜像      milvusdb/milvus:v3.0.2（另有 etcd v3.5.25、minio RELEASE.2024-12-18）
+集合名           pentest_kb
+向量维度         1024
+度量方式         COSINE
+条数             27820
+嵌入模型         bge-m3:latest（Ollama，1.16 GB）
+Python 依赖      pymilvus==3.0.2   mcp==2.2.0
+语料来源         11 个上游仓库原文（HackTricks、PayloadsAllTheThings、InternalAllTheThings、
+                 The Hacker Recipes、OWASP WSTG、PEASS-ng、GTFOBins、LOLBAS、
+                 AD Exploitation Cheat Sheet、netbiosX Checklists）
+                 SecLists 已剔除（纯爆破字典，不是知识，入库只会污染检索）
+
+======================= 校验和（sha256）=======================
+
+volumes.tar.gz    098df32e85a1a11c12348c540fde90384cfc4cad22c051285845167d67b5923e
+chunks.jsonl      63d351cdd65114052978f189e90462a83a3b1ac8e5b16e8d039f476b6fd2c150
+kb.py             2132e91f80eb38291d6623eb727fca3860af92ada39a1495a615ca863f7b29b8
+mcp_server.py     c66fb516680e773c81404b3f55e59ab2fd1a198a535e05b2dae9c1b8970ada3b
+
+校验：sha256sum -c 或手动比对。volumes.tar.gz 若损坏，目标机 Milvus 会起不来
+（或起了但集合为空）——用 rebuild/ 重建可绕过。
+
+======================= 打包方式（可复现）=======================
+
+1. docker compose -f <compose> stop        # 必须先停，否则 etcd/minio 快照可能损坏
+2. 复制 volumes/ 到临时目录
+3. docker compose -f <compose> up -d       # 立刻恢复服务，停机仅约 2 秒
+4. 对副本 tar czf（约 3 分钟，751 MB）
+   注：minio 里是 float 向量 binlog，本身不可压，所以 934M 只压到 751M（20%）
+
+未打包的内容及原因：
+  rag/.venv        (236 MB)  平台绑定（Windows 的 venv 在 Linux 上不能用），改用 requirements.txt
+  sources/         (3.1 GB)  与 volumes 重复；只有"从语料重切块"才需要
+  sources 的语料原文不在包内 —— 若要完全重建索引，需要另外提供

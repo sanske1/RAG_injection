@@ -1,0 +1,10 @@
+{
+  "_说明": "把下面两个绝对路径改成目标机上的真实路径，然后放到会话的项目根目录，文件名必须叫 .mcp.json。",
+  "_启用": "还必须在 <项目根>/.claude/settings.local.json 里加 \"enabledMcpjsonServers\": [\"pentest-kb\"]，否则每次都要手动批准。MCP 服务是会话启动时建立的，改完要重启会话。",
+  "mcpServers": {
+    "pentest-kb": {
+      "command": "<目标机Python路径>/python.exe 或 /usr/bin/python3（建议用 venv 里的）",
+      "args": ["<本 skill 的 mcp 目录绝对路径>/mcp_server.py"]
+    }
+  }
+}

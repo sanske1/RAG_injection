@@ -3,7 +3,33 @@
 给渗透测试用的**离线语义检索知识库**。语料是上游权威文档原文，经切块、向量化后存进 Milvus，
 通过 MCP 工具供 Claude Code 在渗透测试过程中检索取用。
 
-范围：**Web 渗透 + 内网提权**。不涉及 Kali 环境搭建。
+范围：**Web 渗透 + 内网提权**。语料本身不涉及 Kali 环境搭建（工具安装、网络配置那类）。
+
+## 它怎么被用
+
+知识库只解决"该怎么做"，执行交给 Kali。两边串成一条闭环：
+
+```
+   Claude Code（Windows 侧）
+        │
+        │  ① search_pentest_kb(query)          取权威步骤 / payload / 命令
+        ▼
+   本地 RAG 知识库（Milvus + embedding 模型）
+        │
+        │  ② ssh kali '<命令>'                  BatchMode，非交互会话
+        ▼
+   Kali（虚拟机）                             执行 nmap / sqlmap / ffuf / netexec / impacket …
+        │
+        │  ③ 回传结果 → 判读 → 决定下一步
+        └────────────────► 回到 ①
+```
+
+分工是刻意的：**Windows 侧查知识库，Kali 侧执行渗透操作**。知识库不生成答案、
+只返回上游原文片段，所以"这次没查到有用的"要归因到检索，而不是丢给模型去编。
+
+实测：CISP-PTE 靶场（五个端口，五个互相隔离的容器）从信息收集到全部打穿，
+单轮约 **15 分钟**。`sources/自建经验/` 里的那份复盘就是这几轮攒下来的——
+记的是失误点、WAF 绕过实测结论、日志判读要点，所以它入独立集合、默认不参与检索。
 
 ## 架构
 
@@ -42,6 +68,34 @@ Milvus 未起时：
 ```bash
 docker compose -f skill/milvus/milvus-standalone-docker-compose.yaml up -d
 ```
+
+## 启用清单
+
+前五步做完才算"环境准备完整"，第六步之后 agent 就能按上面那条闭环干活。
+
+| # | 做什么 | 详见 |
+|---|---|---|
+| 1 | 起 Milvus（三容器） | 上一节 |
+| 2 | 准备**向量化后端**（起 Ollama 拉 `bge-m3`，或自行改 `embed()` 接外部 API） | 下节「向量化后端」 |
+| 3 | 浅克隆 11 个上游仓库进 `sources/` | 「语料来源」 |
+| 4 | 切块 + 入库 | 「用法」①② |
+| 5 | 接 MCP，重启会话 | 「用法」③ |
+| 6 | 把 `skill/` 丢给 agent 装上，它即可用 `search_pentest_kb` | `skill/SKILL.md` |
+
+### 向量化后端
+
+`kb.py` 的 `embed()` 目前**只走 Ollama**（`{OLLAMA_HOST}/api/embed`）：
+
+| 变量 | 默认 | 说明 |
+|---|---|---|
+| `PENTEST_KB_OLLAMA_HOST` | `http://localhost:11434` | Ollama 地址 |
+| `PENTEST_KB_EMBED_MODEL` | `bge-m3` | 换模型只改这里 |
+
+- **换 Ollama 上别的 embedding 模型**（如 `nomic-embed-text`）改这个变量即可，
+  但**必须同步改 `kb.py` 的 `DIM` 并重建集合**——`DIM` 是写死的 1024。
+- **接外部 API（OpenAI 兼容端点）目前不支持**。`embed()` 是写死的 Ollama 调用，
+  没有 `base_url` / `api_key` 参数；要用外部 API 得自己改那十几行，并同步改 `DIM`。
+  这是已知的扩展点，不是现成的配置项。
 
 ## 用法
 

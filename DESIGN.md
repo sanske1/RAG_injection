@@ -69,6 +69,34 @@ python rag/ingest.py --chunks rag/chunks_lessons.jsonl --collection pentest_less
 一路误判成"环境故障"。）所以每个文件 < 2KB、不含 emoji，并在文档里明确写了
 "读失败不要做字节切片二分"。
 
+## Kali 执行通道
+
+知识库只解决"该怎么做"，执行走 SSH 到 Kali。几个必须注意的点：
+
+- **`BatchMode=yes` 必须加**。不加的话，遇到新主机或密码提示时，非交互会话会直接挂死——
+  agent 调用时没有终端可以应答：
+
+  ```bash
+  ssh -o BatchMode=yes kali '<命令>'
+  ```
+
+- **认证只用密钥**，不留任何口令交互。在 `~/.ssh/config` 里配一个 `Host kali` 别名
+  （含 `ServerAliveInterval 30`），命令就能短到 `ssh kali '...'`。
+- **`apt` 源要挑**：国内镜像通常限制境外 IP，走代理/VPN 时清华源会返回
+  **403 Forbidden**，换中科大或直接用官方 `http.kali.org/kali`。
+- **DHCP 未就绪时 `ip -4 -br addr` 只显示 `lo`**，别误判成"没有网卡"、别急着去改虚拟机设置。
+  等几秒用 `ip -br addr` 复核再下结论——这是 `sources/自建经验/靶场失误与经验.md` 里的失误二。
+- **Kali 的 `ssh` 服务默认不自启**，需要 `systemctl enable --now ssh`。
+
+### 常用工具清单
+
+`nmap` `sqlmap` `ffuf` `hydra` `whatweb` `hashcat` `john` `responder` `crackmapexec`
+`impacket` 全家桶（`secretsdump` / `psexec` / `smbexec` / `wmiexec` / `atexec` / `dcomexec`）
+`certipy` `netexec`（`nxc`，覆盖 smb / ldap / winrm / wmi / mssql / rdp / ssh / ftp / nfs / vnc）
+`bloodhound-python`。
+
+缺的用替代品顶：`gobuster` / `feroxbuster` 用 `ffuf`；`msfconsole` 不是必需的。
+
 ## skill 分发包
 
 位置：`skill/`，用于**提交给别的 agent**，完整包约 779 MB。
